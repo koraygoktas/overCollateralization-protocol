@@ -167,7 +167,7 @@ contract LendingPoolTest is Test {
         vm.prank(alice);
         pool.borrow(borrowAmount);
 
-        collateralOracle.setPrice(0.30e18);
+        collateralOracle.setPrice(0.40e18);
 
         debtToken.mint(bob, borrowAmount);
 

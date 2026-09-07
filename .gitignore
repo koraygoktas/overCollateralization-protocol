@@ -1,0 +1,16 @@
+# Foundry
+cache/
+out/
+broadcast/
+
+# Ortam değişkenleri / secrets
+.env
+.env.*
+
+# IDE / editör
+.vscode/
+.idea/
+
+# İşletim sistemi
+.DS_Store
+Thumbs.db
