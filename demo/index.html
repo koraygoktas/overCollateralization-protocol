@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>İtibar Defteri — Aşırı Teminatlandırma Protokolü</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0B1720;
+    --bg-panel: #101F2B;
+    --bg-panel-raised: #142837;
+    --line: #24394A;
+    --ink: #EAF1F0;
+    --ink-dim: #9FB4BC;
+    --ink-faint: #607580;
+    --gold: #CFA33F;
+    --gold-dim: #8A7031;
+    --sage: #6FA98C;
+    --brick: #C1604A;
+    --font-display: 'Fraunces', serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(207,163,63,0.06), transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(111,169,140,0.05), transparent 45%);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  a { color: var(--gold); }
+
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .brand h1 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .brand p {
+    margin: 0;
+    color: var(--ink-dim);
+    font-size: 14px;
+    max-width: 480px;
+  }
+
+  .wallet-box {
+    text-align: right;
+    min-width: 220px;
+  }
+
+  button {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    border-radius: 8px;
+    padding: 11px 18px;
+    cursor: pointer;
+    transition: transform 0.08s ease, opacity 0.15s ease;
+  }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--gold);
+    color: #1A1206;
+  }
+  .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+  .btn-secondary {
+    background: var(--bg-panel-raised);
+    color: var(--ink);
+    border: 1px solid var(--line);
+  }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--gold-dim); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--brick);
+    border: 1px solid var(--brick);
+  }
+
+  .addr-chip {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--sage);
+    background: rgba(111,169,140,0.1);
+    border: 1px solid rgba(111,169,140,0.25);
+    padding: 6px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  .net-chip {
+    font-size: 11px;
+    color: var(--ink-faint);
+    display: block;
+  }
+
+  .hero {
+    background: linear-gradient(180deg, var(--bg-panel), var(--bg-panel-raised));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 32px;
+    margin-bottom: 28px;
+  }
+
+  .hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+
+  .hero-label {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+  }
+
+  .hero-ratio {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--gold);
+  }
+  .hero-ratio span { font-size: 26px; color: var(--ink-dim); font-family: var(--font-body); font-weight: 500; }
+
+  .status-badge {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .status-healthy { color: var(--sage); border-color: var(--sage); background: rgba(111,169,140,0.08); }
+  .status-risky { color: var(--brick); border-color: var(--brick); background: rgba(193,96,74,0.08); }
+  .status-none { color: var(--ink-faint); border-color: var(--line); }
+
+  .gauge-track {
+    position: relative;
+    height: 10px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    margin: 18px 0 8px;
+    overflow: visible;
+  }
+  .gauge-fill {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    background: linear-gradient(90deg, var(--brick), var(--gold), var(--sage));
+    border-radius: 6px;
+    width: 0%;
+  }
+  .gauge-marker {
+    position: absolute;
+    top: -5px;
+    width: 4px;
+    height: 20px;
+    background: var(--ink);
+    border-radius: 2px;
+    left: 0%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 2px var(--bg);
+  }
+  .gauge-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+  }
+  .stat-tile {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .stat-tile .k { font-size: 12px; color: var(--ink-dim); margin-bottom: 6px; }
+  .stat-tile .v { font-family: var(--font-mono); font-size: 20px; color: var(--ink); }
+  .stat-tile .v small { font-size: 12px; color: var(--ink-faint); }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } .hero-stats { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px;
+  }
+
+  .panel h2 {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .panel .sub {
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin: 0 0 18px;
+  }
+
+  .row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 14px;
+  }
+  input:focus { outline: none; border-color: var(--gold-dim); }
+
+  .balance-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-bottom: 14px;
+  }
+  .balance-line b { color: var(--ink); font-family: var(--font-mono); font-weight: 500; }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .action-row button { flex: 1; min-width: 100px; }
+
+  .full-panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+
+  details summary {
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    padding: 4px 0;
+    list-style: none;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::before {
+    content: '▸ ';
+    color: var(--gold);
+  }
+  details[open] summary::before { content: '▾ '; }
+  details .sub { margin-top: 4px; }
+
+  .log {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .log-line { padding: 4px 0; border-bottom: 1px solid var(--line); color: var(--ink-dim); }
+  .log-line:last-child { border-bottom: none; }
+  .log-line.ok { color: var(--sage); }
+  .log-line.err { color: var(--brick); }
+  .log-line .t { color: var(--ink-faint); margin-right: 8px; }
+
+  .hint {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 14px;
+    line-height: 1.6;
+  }
+
+  .lock-overlay {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--ink-dim);
+  }
+  .lock-overlay .icon { font-size: 32px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>İtibar Defteri</h1>
+      <p>Sabit %150 yerine, geri ödeme geçmişine göre kademeli düşen bir teminat oranı — sınırları %120'nin altına asla inmeyecek şekilde kilitlenmiş.</p>
+    </div>
+    <div class="wallet-box">
+      <div id="walletInfo" style="display:none;">
+        <span class="addr-chip" id="addrChip">—</span>
+        <span class="net-chip" id="netChip">Sepolia</span>
+      </div>
+      <button class="btn-primary" id="connectBtn">Cüzdanı Bağla</button>
+    </div>
+  </header>
+
+  <div id="lockedView" class="lock-overlay">
+    <div class="icon">◇</div>
+    <div>Panele erişmek için önce cüzdanını bağla (MetaMask, Sepolia ağı).</div>
+  </div>
+
+  <div id="app" style="display:none;">
+
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="hero-label">Şu anki gereken teminat oranı</div>
+          <div class="hero-ratio"><span id="ratioValue">—</span><span>%</span></div>
+        </div>
+        <div class="status-badge status-none" id="statusBadge">Bekleniyor</div>
+      </div>
+
+      <div class="gauge-track">
+        <div class="gauge-fill" id="gaugeFill"></div>
+        <div class="gauge-marker" id="gaugeMarker"></div>
+      </div>
+      <div class="gauge-labels">
+        <span>%120 (taban)</span>
+        <span>%150 (başlangıç)</span>
+      </div>
+
+      <div class="hero-stats">
+        <div class="stat-tile">
+          <div class="k">İtibar puanı</div>
+          <div class="v" id="repScore">—</div>
+        </div>
+        <div class="stat-tile">
+          <div class="k">Maks. borç limiti</div>
+          <div class="v" id="maxLimit">— <small>mDEBT</small></div>
+        </div>
+        <div class="stat-tile">
+          <div class="k">Pozisyon sağlığı</div>
+          <div class="v" id="healthText" style="font-size:15px;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <h2>Teminat (mCOL)</h2>
+        <p class="sub">Havuza yatırdığın teminat</p>
+
+        <div class="balance-line">
+          <span>Cüzdan bakiyesi</span>
+          <b id="colWalletBal">—</b>
+        </div>
+        <div class="balance-line">
+          <span>Havuzdaki teminatın</span>
+          <b id="colPoolBal">—</b>
+        </div>
+
+        <div class="row">
+          <input type="number" id="depositInput" placeholder="Miktar (örn. 200)" min="0" step="any" />
+        </div>
+        <div class="action-row">
+          <button class="btn-primary" id="depositBtn">Yatır</button>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <input type="number" id="withdrawInput" placeholder="Miktar (örn. 50)" min="0" step="any" />
+        </div>
+        <div class="action-row">
+          <button class="btn-secondary" id="withdrawBtn">Çek</button>
+        </div>
+
+        <div class="action-row" style="margin-top:14px;">
+          <button class="btn-secondary" id="mintColBtn">Test için 500 mCOL bas</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Borç (mDEBT)</h2>
+        <p class="sub">Havuzdan aldığın borç</p>
+
+        <div class="balance-line">
+          <span>Cüzdan bakiyesi</span>
+          <b id="debtWalletBal">—</b>
+        </div>
+        <div class="balance-line">
+          <span>Toplam borcun</span>
+          <b id="debtPoolBal">—</b>
+        </div>
+
+        <div class="row">
+          <input type="number" id="borrowInput" placeholder="Miktar (örn. 80)" min="0" step="any" />
+        </div>
+        <div class="action-row">
+          <button class="btn-primary" id="borrowBtn">Borç Al</button>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <input type="number" id="repayInput" placeholder="Miktar (örn. 80)" min="0" step="any" />
+        </div>
+        <div class="action-row">
+          <button class="btn-secondary" id="repayBtn">Öde</button>
+        </div>
+
+        <div class="hint">Tam ödeme yapınca itibarın +1 artar, taban orana bir kademe daha yaklaşırsın.</div>
+      </div>
+    </div>
+
+    <div class="full-panel">
+      <details>
+        <summary>Likidasyon Paneli</summary>
+        <p class="sub">Sağlıksız hale gelmiş (gereken oranın altına düşmüş) bir pozisyonu kapat, karşılığında %10 bonuslu teminat al.</p>
+        <div class="row">
+          <input type="text" id="liqAddress" placeholder="Likide edilecek kullanıcı adresi (0x...)" />
+        </div>
+        <div class="row">
+          <input type="number" id="liqAmount" placeholder="Kapatılacak borç miktarı (mDEBT)" min="0" step="any" />
+        </div>
+        <div class="action-row">
+          <button class="btn-danger" id="liqBtn">Likide Et</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="full-panel">
+      <details>
+        <summary>Fiyat Simülasyonu (Oracle)</summary>
+        <p class="sub">Sadece oracle sahibi (deploy eden cüzdan) fiyatı değiştirebilir. Likidasyon senaryosunu tetiklemek için teminat fiyatını düşürebilir ya da borç fiyatını yükseltebilirsin.</p>
+
+        <div class="grid-2" style="margin-top:12px;">
+          <div>
+            <div class="balance-line"><span>Güncel teminat fiyatı</span><b id="colPrice">—</b></div>
+            <div class="row">
+              <input type="number" id="colPriceInput" placeholder="Yeni fiyat, $ (örn. 0.40)" min="0" step="any" />
+              <button class="btn-secondary" id="setColPriceBtn">Ayarla</button>
+            </div>
+          </div>
+          <div>
+            <div class="balance-line"><span>Güncel borç fiyatı</span><b id="debtPrice">—</b></div>
+            <div class="row">
+              <input type="number" id="debtPriceInput" placeholder="Yeni fiyat, $ (örn. 1.00)" min="0" step="any" />
+              <button class="btn-secondary" id="setDebtPriceBtn">Ayarla</button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+
+    <div class="full-panel">
+      <h2 style="font-size:15px; margin-bottom:12px;">İşlem Kaydı</h2>
+      <div class="log" id="logBox">
+        <div class="log-line">Henüz işlem yok.</div>
+      </div>
+    </div>
+
+    <div class="hint" style="text-align:center;">
+      LendingPool: <span id="poolAddrFooter" style="font-family:var(--font-mono);"></span> ·
+      <a id="etherscanLink" href="#" target="_blank">Etherscan'de gör</a>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
