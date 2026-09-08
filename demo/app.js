@@ -47,12 +47,12 @@ const $ = (id) => document.getElementById(id);
 
 function log(msg, kind = "") {
   const box = $("logBox");
-  if (box.children.length === 1 && box.children[0].textContent === "Henüz işlem yok.") {
+  if (box.children.length === 1 && box.children[0].textContent === "No transactions yet.") {
     box.innerHTML = "";
   }
   const line = document.createElement("div");
   line.className = "log-line " + kind;
-  const time = new Date().toLocaleTimeString("tr-TR");
+  const time = new Date().toLocaleTimeString("en-US");
   line.innerHTML = `<span class="t">${time}</span>${msg}`;
   box.prepend(line);
 }
@@ -60,7 +60,7 @@ function log(msg, kind = "") {
 function fmt(bigVal, decimals = 18, maxFrac = 3) {
   try {
     const s = ethers.formatUnits(bigVal, decimals);
-    return Number(s).toLocaleString("tr-TR", { maximumFractionDigits: maxFrac });
+    return Number(s).toLocaleString("en-US", { maximumFractionDigits: maxFrac });
   } catch (e) {
     return "—";
   }
@@ -71,15 +71,15 @@ function extractError(e) {
   if (e?.shortMessage) return e.shortMessage;
   if (e?.info?.error?.message) return e.info.error.message;
   if (e?.message) return e.message.slice(0, 120);
-  return "Bilinmeyen hata";
+  return "Unknown error";
 }
 
 $("connectBtn").addEventListener("click", connectWallet);
 
 async function connectWallet() {
   if (!window.ethereum) {
-    log("MetaMask bulunamadı. Lütfen MetaMask uzantısını kur ve sayfayı yenile.", "err");
-    alert("MetaMask bulunamadı. Lütfen MetaMask uzantısını kur ve sayfayı yenile.");
+    log("MetaMask not found. Please install the MetaMask extension and refresh the page.", "err");
+    alert("MetaMask not found. Please install the MetaMask extension and refresh the page.");
     return;
   }
   try {
@@ -98,20 +98,20 @@ async function connectWallet() {
 
     $("addrChip").textContent = userAddress.slice(0, 6) + "…" + userAddress.slice(-4);
     $("walletInfo").style.display = "block";
-    $("connectBtn").textContent = "Bağlandı";
+    $("connectBtn").textContent = "Connected";
     $("connectBtn").disabled = true;
     $("lockedView").style.display = "none";
     $("app").style.display = "block";
     $("poolAddrFooter").textContent = ADDR.pool;
     $("etherscanLink").href = "https://sepolia.etherscan.io/address/" + ADDR.pool;
 
-    log("Cüzdan bağlandı: " + userAddress, "ok");
+    log("Wallet connected: " + userAddress, "ok");
     await refreshAll();
 
     window.ethereum.on("accountsChanged", () => window.location.reload());
     window.ethereum.on("chainChanged", () => window.location.reload());
   } catch (e) {
-    log("Bağlantı hatası: " + extractError(e), "err");
+    log("Connection error: " + extractError(e), "err");
   }
 }
 
@@ -181,8 +181,8 @@ async function refreshAll() {
     $("gaugeFill").style.width = posPct + "%";
     $("gaugeMarker").style.left = posPct + "%";
 
-    $("colPrice").textContent = "$" + Number(ethers.formatUnits(colPrice, 18)).toLocaleString("tr-TR", {maximumFractionDigits: 4});
-    $("debtPrice").textContent = "$" + Number(ethers.formatUnits(debtPrice, 18)).toLocaleString("tr-TR", {maximumFractionDigits: 4});
+    $("colPrice").textContent = "$" + Number(ethers.formatUnits(colPrice, 18)).toLocaleString("en-US", {maximumFractionDigits: 4});
+    $("debtPrice").textContent = "$" + Number(ethers.formatUnits(debtPrice, 18)).toLocaleString("en-US", {maximumFractionDigits: 4});
 
     const collateralValue = (colPoolBal * colPrice) / (10n ** 18n);
     const debtValue = (debtPoolBal * debtPrice) / (10n ** 18n);
@@ -193,114 +193,114 @@ async function refreshAll() {
     const healthText = $("healthText");
     if (debtPoolBal === 0n) {
       badge.className = "status-badge status-none";
-      badge.textContent = "Borç yok";
+      badge.textContent = "No debt";
       healthText.textContent = "—";
     } else if (isHealthy) {
       badge.className = "status-badge status-healthy";
-      badge.textContent = "Sağlıklı";
-      healthText.textContent = "Sağlıklı";
+      badge.textContent = "Healthy";
+      healthText.textContent = "Healthy";
       healthText.style.color = "var(--sage)";
     } else {
       badge.className = "status-badge status-risky";
-      badge.textContent = "Likidasyona Açık";
-      healthText.textContent = "Riskli";
+      badge.textContent = "Open to Liquidation";
+      healthText.textContent = "Risky";
       healthText.style.color = "var(--brick)";
     }
   } catch (e) {
-    log("Veri okuma hatası: " + extractError(e), "err");
+    log("Data read error: " + extractError(e), "err");
   }
 }
 
 async function runTx(label, fn) {
   try {
-    log(label + " gönderiliyor…");
+    log(label + " sending...");
     const tx = await fn();
-    log(label + " onay bekleniyor: " + tx.hash.slice(0, 10) + "…");
+    log(label + " awaiting confirmation: " + tx.hash.slice(0, 10) + "…");
     await tx.wait();
-    log(label + " başarılı ✓", "ok");
+    log(label + " successful ✓", "ok");
     await refreshAll();
   } catch (e) {
-    log(label + " başarısız: " + extractError(e), "err");
+    log(label + " failed: " + extractError(e), "err");
   }
 }
 
 $("mintColBtn").addEventListener("click", () => {
-  runTx("Test mCOL basma", () =>
+  runTx("Mint test mCOL", () =>
     collateralToken.mint(userAddress, ethers.parseUnits("500", 18))
   );
 });
 
 $("depositBtn").addEventListener("click", async () => {
   const val = $("depositInput").value;
-  if (!val || Number(val) <= 0) return log("Geçerli bir miktar gir.", "err");
+  if (!val || Number(val) <= 0) return log("Enter a valid amount.", "err");
   const amount = ethers.parseUnits(val, 18);
   try {
-    log("Onay (approve) gönderiliyor…");
+    log("Sending approval...");
     const approveTx = await collateralToken.approve(ADDR.pool, amount);
     await approveTx.wait();
-    log("Onay tamamlandı ✓", "ok");
-    await runTx("Teminat yatırma", () => pool.deposit(amount));
+    log("Approval completed ✓", "ok");
+    await runTx("Depositing collateral", () => pool.deposit(amount));
     $("depositInput").value = "";
   } catch (e) {
-    log("Yatırma başarısız: " + extractError(e), "err");
+    log("Deposit failed: " + extractError(e), "err");
   }
 });
 
 $("withdrawBtn").addEventListener("click", () => {
   const val = $("withdrawInput").value;
-  if (!val || Number(val) <= 0) return log("Geçerli bir miktar gir.", "err");
-  runTx("Teminat çekme", () => pool.withdraw(ethers.parseUnits(val, 18)))
+  if (!val || Number(val) <= 0) return log("Enter a valid amount.", "err");
+  runTx("Withdrawing collateral", () => pool.withdraw(ethers.parseUnits(val, 18)))
     .then(() => { $("withdrawInput").value = ""; });
 });
 
 $("borrowBtn").addEventListener("click", () => {
   const val = $("borrowInput").value;
-  if (!val || Number(val) <= 0) return log("Geçerli bir miktar gir.", "err");
-  runTx("Borç alma", () => pool.borrow(ethers.parseUnits(val, 18)))
+  if (!val || Number(val) <= 0) return log("Enter a valid amount.", "err");
+  runTx("Borrowing debt", () => pool.borrow(ethers.parseUnits(val, 18)))
     .then(() => { $("borrowInput").value = ""; });
 });
 
 $("repayBtn").addEventListener("click", async () => {
   const val = $("repayInput").value;
-  if (!val || Number(val) <= 0) return log("Geçerli bir miktar gir.", "err");
+  if (!val || Number(val) <= 0) return log("Enter a valid amount.", "err");
   const amount = ethers.parseUnits(val, 18);
   try {
-    log("Onay (approve) gönderiliyor…");
+    log("Sending approval...");
     const approveTx = await debtToken.approve(ADDR.pool, amount);
     await approveTx.wait();
-    log("Onay tamamlandı ✓", "ok");
-    await runTx("Borç ödeme", () => pool.repay(amount));
+    log("Approval completed ✓", "ok");
+    await runTx("Repaying debt", () => pool.repay(amount));
     $("repayInput").value = "";
   } catch (e) {
-    log("Ödeme başarısız: " + extractError(e), "err");
+    log("Repayment failed: " + extractError(e), "err");
   }
 });
 
 $("liqBtn").addEventListener("click", async () => {
   const addr = $("liqAddress").value.trim();
   const val = $("liqAmount").value;
-  if (!ethers.isAddress(addr)) return log("Geçerli bir adres gir.", "err");
-  if (!val || Number(val) <= 0) return log("Geçerli bir miktar gir.", "err");
+  if (!ethers.isAddress(addr)) return log("Enter a valid address.", "err");
+  if (!val || Number(val) <= 0) return log("Enter a valid amount.", "err");
   const amount = ethers.parseUnits(val, 18);
   try {
-    log("Onay (approve) gönderiliyor…");
+    log("Sending approval...");
     const approveTx = await debtToken.approve(ADDR.pool, amount);
     await approveTx.wait();
-    log("Onay tamamlandı ✓", "ok");
-    await runTx("Likidasyon", () => pool.liquidate(addr, amount));
+    log("Approval completed ✓", "ok");
+    await runTx("Liquidation", () => pool.liquidate(addr, amount));
   } catch (e) {
-    log("Likidasyon başarısız: " + extractError(e), "err");
+    log("Liquidation failed: " + extractError(e), "err");
   }
 });
 
 $("setColPriceBtn").addEventListener("click", () => {
   const val = $("colPriceInput").value;
-  if (!val || Number(val) < 0) return log("Geçerli bir fiyat gir.", "err");
-  runTx("Teminat fiyatı güncelleme", () => collateralOracle.setPrice(ethers.parseUnits(val, 18)));
+  if (!val || Number(val) < 0) return log("Enter a valid price.", "err");
+  runTx("Updating collateral price", () => collateralOracle.setPrice(ethers.parseUnits(val, 18)));
 });
 
 $("setDebtPriceBtn").addEventListener("click", () => {
   const val = $("debtPriceInput").value;
-  if (!val || Number(val) < 0) return log("Geçerli bir fiyat gir.", "err");
-  runTx("Borç fiyatı güncelleme", () => debtOracle.setPrice(ethers.parseUnits(val, 18)));
+  if (!val || Number(val) < 0) return log("Enter a valid price.", "err");
+  runTx("Updating debt price", () => debtOracle.setPrice(ethers.parseUnits(val, 18)));
 });

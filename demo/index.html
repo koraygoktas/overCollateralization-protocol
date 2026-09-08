@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>İtibar Defteri — Aşırı Teminatlandırma Protokolü</title>
+<title>Reputation Ledger — Over-Collateralization Protocol</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
@@ -344,21 +344,21 @@
 
   <header>
     <div class="brand">
-      <h1>İtibar Defteri</h1>
-      <p>Sabit %150 yerine, geri ödeme geçmişine göre kademeli düşen bir teminat oranı — sınırları %120'nin altına asla inmeyecek şekilde kilitlenmiş.</p>
+      <h1>Reputation Ledger</h1>
+      <p>Instead of a fixed 150%, a collateral ratio that decreases progressively based on repayment history — locked so its limits never fall below 120%.</p>
     </div>
     <div class="wallet-box">
       <div id="walletInfo" style="display:none;">
         <span class="addr-chip" id="addrChip">—</span>
         <span class="net-chip" id="netChip">Sepolia</span>
       </div>
-      <button class="btn-primary" id="connectBtn">Cüzdanı Bağla</button>
+      <button class="btn-primary" id="connectBtn">Connect Wallet</button>
     </div>
   </header>
 
   <div id="lockedView" class="lock-overlay">
     <div class="icon">◇</div>
-    <div>Panele erişmek için önce cüzdanını bağla (MetaMask, Sepolia ağı).</div>
+    <div>Connect your wallet first to access the dashboard (MetaMask, Sepolia Network).</div>
   </div>
 
   <div id="app" style="display:none;">
@@ -366,10 +366,10 @@
     <div class="hero">
       <div class="hero-top">
         <div>
-          <div class="hero-label">Şu anki gereken teminat oranı</div>
+          <div class="hero-label">Current required collateral ratio</div>
           <div class="hero-ratio"><span id="ratioValue">—</span><span>%</span></div>
         </div>
-        <div class="status-badge status-none" id="statusBadge">Bekleniyor</div>
+        <div class="status-badge status-none" id="statusBadge">Pending</div>
       </div>
 
       <div class="gauge-track">
@@ -377,21 +377,21 @@
         <div class="gauge-marker" id="gaugeMarker"></div>
       </div>
       <div class="gauge-labels">
-        <span>%120 (taban)</span>
-        <span>%150 (başlangıç)</span>
+        <span>120% (floor)</span>
+        <span>150% (initial)</span>
       </div>
 
       <div class="hero-stats">
         <div class="stat-tile">
-          <div class="k">İtibar puanı</div>
+          <div class="k">Reputation score</div>
           <div class="v" id="repScore">—</div>
         </div>
         <div class="stat-tile">
-          <div class="k">Maks. borç limiti</div>
+          <div class="k">Max borrow limit</div>
           <div class="v" id="maxLimit">— <small>mDEBT</small></div>
         </div>
         <div class="stat-tile">
-          <div class="k">Pozisyon sağlığı</div>
+          <div class="k">Position health</div>
           <div class="v" id="healthText" style="font-size:15px;">—</div>
         </div>
       </div>
@@ -399,102 +399,102 @@
 
     <div class="grid-2">
       <div class="panel">
-        <h2>Teminat (mCOL)</h2>
-        <p class="sub">Havuza yatırdığın teminat</p>
+        <h2>Collateral (mCOL)</h2>
+        <p class="sub">Your collateral deposited in the pool</p>
 
         <div class="balance-line">
-          <span>Cüzdan bakiyesi</span>
+          <span>Wallet balance</span>
           <b id="colWalletBal">—</b>
         </div>
         <div class="balance-line">
-          <span>Havuzdaki teminatın</span>
+          <span>Your collateral in the pool</span>
           <b id="colPoolBal">—</b>
         </div>
 
         <div class="row">
-          <input type="number" id="depositInput" placeholder="Miktar (örn. 200)" min="0" step="any" />
+          <input type="number" id="depositInput" placeholder="Amount (e.g. 200)" min="0" step="any" />
         </div>
         <div class="action-row">
-          <button class="btn-primary" id="depositBtn">Yatır</button>
+          <button class="btn-primary" id="depositBtn">Deposit</button>
         </div>
 
         <div class="row" style="margin-top:14px;">
-          <input type="number" id="withdrawInput" placeholder="Miktar (örn. 50)" min="0" step="any" />
+          <input type="number" id="withdrawInput" placeholder="Amount (e.g. 50)" min="0" step="any" />
         </div>
         <div class="action-row">
-          <button class="btn-secondary" id="withdrawBtn">Çek</button>
+          <button class="btn-secondary" id="withdrawBtn">Withdraw</button>
         </div>
 
         <div class="action-row" style="margin-top:14px;">
-          <button class="btn-secondary" id="mintColBtn">Test için 500 mCOL bas</button>
+          <button class="btn-secondary" id="mintColBtn">Mint 500 mCOL for testing</button>
         </div>
       </div>
 
       <div class="panel">
-        <h2>Borç (mDEBT)</h2>
-        <p class="sub">Havuzdan aldığın borç</p>
+        <h2>Debt (mDEBT)</h2>
+        <p class="sub">Your debt borrowed from the pool</p>
 
         <div class="balance-line">
-          <span>Cüzdan bakiyesi</span>
+          <span>Wallet balance</span>
           <b id="debtWalletBal">—</b>
         </div>
         <div class="balance-line">
-          <span>Toplam borcun</span>
+          <span>Your total debt</span>
           <b id="debtPoolBal">—</b>
         </div>
 
         <div class="row">
-          <input type="number" id="borrowInput" placeholder="Miktar (örn. 80)" min="0" step="any" />
+          <input type="number" id="borrowInput" placeholder="Amount (e.g. 80)" min="0" step="any" />
         </div>
         <div class="action-row">
-          <button class="btn-primary" id="borrowBtn">Borç Al</button>
+          <button class="btn-primary" id="borrowBtn">Borrow</button>
         </div>
 
         <div class="row" style="margin-top:14px;">
-          <input type="number" id="repayInput" placeholder="Miktar (örn. 80)" min="0" step="any" />
+          <input type="number" id="repayInput" placeholder="Amount (e.g. 80)" min="0" step="any" />
         </div>
         <div class="action-row">
-          <button class="btn-secondary" id="repayBtn">Öde</button>
+          <button class="btn-secondary" id="repayBtn">Repay</button>
         </div>
 
-        <div class="hint">Tam ödeme yapınca itibarın +1 artar, taban orana bir kademe daha yaklaşırsın.</div>
+        <div class="hint">Full repayment increases your reputation by +1, bringing you one step closer to the floor ratio.</div>
       </div>
     </div>
 
     <div class="full-panel">
       <details>
-        <summary>Likidasyon Paneli</summary>
-        <p class="sub">Sağlıksız hale gelmiş (gereken oranın altına düşmüş) bir pozisyonu kapat, karşılığında %10 bonuslu teminat al.</p>
+        <summary>Liquidation Panel</summary>
+        <p class="sub">Close an unhealthy position (fallen below the required ratio) and receive collateral with a 10% bonus.</p>
         <div class="row">
-          <input type="text" id="liqAddress" placeholder="Likide edilecek kullanıcı adresi (0x...)" />
+          <input type="text" id="liqAddress" placeholder="User address to liquidate (0x...)" />
         </div>
         <div class="row">
-          <input type="number" id="liqAmount" placeholder="Kapatılacak borç miktarı (mDEBT)" min="0" step="any" />
+          <input type="number" id="liqAmount" placeholder="Debt amount to cover (mDEBT)" min="0" step="any" />
         </div>
         <div class="action-row">
-          <button class="btn-danger" id="liqBtn">Likide Et</button>
+          <button class="btn-danger" id="liqBtn">Liquidate</button>
         </div>
       </details>
     </div>
 
     <div class="full-panel">
       <details>
-        <summary>Fiyat Simülasyonu (Oracle)</summary>
-        <p class="sub">Sadece oracle sahibi (deploy eden cüzdan) fiyatı değiştirebilir. Likidasyon senaryosunu tetiklemek için teminat fiyatını düşürebilir ya da borç fiyatını yükseltebilirsin.</p>
+        <summary>Price Simulation (Oracle)</summary>
+        <p class="sub">Only the oracle owner (deployer wallet) can change prices. You can decrease the collateral price or increase the debt price to trigger a liquidation scenario.</p>
 
         <div class="grid-2" style="margin-top:12px;">
           <div>
-            <div class="balance-line"><span>Güncel teminat fiyatı</span><b id="colPrice">—</b></div>
+            <div class="balance-line"><span>Current collateral price</span><b id="colPrice">—</b></div>
             <div class="row">
-              <input type="number" id="colPriceInput" placeholder="Yeni fiyat, $ (örn. 0.40)" min="0" step="any" />
-              <button class="btn-secondary" id="setColPriceBtn">Ayarla</button>
+              <input type="number" id="colPriceInput" placeholder="New price, $ (e.g. 0.40)" min="0" step="any" />
+              <button class="btn-secondary" id="setColPriceBtn">Set</button>
             </div>
           </div>
           <div>
-            <div class="balance-line"><span>Güncel borç fiyatı</span><b id="debtPrice">—</b></div>
+            <div class="balance-line"><span>Current debt price</span><b id="debtPrice">—</b></div>
             <div class="row">
-              <input type="number" id="debtPriceInput" placeholder="Yeni fiyat, $ (örn. 1.00)" min="0" step="any" />
-              <button class="btn-secondary" id="setDebtPriceBtn">Ayarla</button>
+              <input type="number" id="debtPriceInput" placeholder="New price, $ (e.g. 1.00)" min="0" step="any" />
+              <button class="btn-secondary" id="setDebtPriceBtn">Set</button>
             </div>
           </div>
         </div>
@@ -502,15 +502,15 @@
     </div>
 
     <div class="full-panel">
-      <h2 style="font-size:15px; margin-bottom:12px;">İşlem Kaydı</h2>
+      <h2 style="font-size:15px; margin-bottom:12px;">Transaction Log</h2>
       <div class="log" id="logBox">
-        <div class="log-line">Henüz işlem yok.</div>
+        <div class="log-line">No transactions yet.</div>
       </div>
     </div>
 
     <div class="hint" style="text-align:center;">
       LendingPool: <span id="poolAddrFooter" style="font-family:var(--font-mono);"></span> ·
-      <a id="etherscanLink" href="#" target="_blank">Etherscan'de gör</a>
+      <a id="etherscanLink" href="#" target="_blank">View on Etherscan</a>
     </div>
   </div>
 </div>
